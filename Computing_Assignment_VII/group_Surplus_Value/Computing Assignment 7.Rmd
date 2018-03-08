@@ -1,0 +1,125 @@
+---
+title: "Assignment 7"
+author: "Surplus Value"
+date: "3/8/2018"
+output: slidy_presentation
+---
+
+
+```{r, echo=FALSE, cache=FALSE, results='asis', warning=FALSE, comment=FALSE, warning=FALSE}
+library(magrittr)
+library(dplyr)
+library(MASS)
+library(purrr)
+library(pwr)
+library(PASWR)
+library(Hmisc)
+library(AER)
+library(knitr)
+```
+  
+
+
+
+```{r, echo=FALSE}
+
+RSdata <- read.csv("~/Desktop/Ph.D./Econometrics/240A/R Problem Sets /Homework 7/RSdata.csv")
+
+RSdata <- transform(RSdata,
+                    ln_area = log(area),
+                    ln_yield = log(prod))
+```
+
+
+
+##### Number 1: Naive Elasticities using OLS
+```{r echo=FALSE, results='asis'}
+
+Reg_Supply <- lm(ln_qs ~ ln_fp + trendsp1+ trendsp2 +trendsp3 , RSdata)
+Reg_Demand <- lm(ln_qd ~ ln_sp + trendsp1 + trendsp2 +trendsp3 , RSdata)
+
+OLS_Supply <- as.data.frame(Reg_Supply$coefficients)
+OLS_Demand <- as.data.frame(Reg_Demand$coefficients)
+
+kable(OLS_Supply)
+kable(OLS_Demand)
+
+```
+
+##### Number 2: Estimation with IV
+
+```{r echo=FALSE, results='asis'}
+
+RegIV_Supply <- ivreg(ln_qs ~ ln_fp + ln_w + trendsp1+ trendsp2 +trendsp3 | ln_w + lag_ln_w + trendsp1 + trendsp2 +trendsp3, data=RSdata)
+RegIV_Demand <- ivreg(ln_qd ~ ln_sp + trendsp1+ trendsp2 +trendsp3 | ln_w + trendsp1 + trendsp2 +trendsp3, data=RSdata)
+
+IV_Supply <- as.data.frame(RegIV_Supply$coefficients)
+IV_Demand <- as.data.frame(RegIV_Demand$coefficients)
+
+kable(IV_Supply)
+kable(IV_Demand)
+```
+
+##### Number 3: Haussman Test
+
+```{r echo=FALSE, results='asis'}
+
+betaOLS_Supply <- coeftest(Reg_Supply)[2,1]
+betaOLS_Supply_Var <- (coeftest(Reg_Supply)[2,2])^2
+
+betaOLS_Demand <- coeftest(Reg_Demand)[2,1]
+betaOLS_Demand_Var <- (coeftest(Reg_Demand)[2,2])^2
+
+betaIV_Supply <- coeftest(RegIV_Supply)[2,1]
+betaIV_Supply_Var <- (coeftest(RegIV_Supply)[2,2])^2
+
+betaIV_Demand <- coeftest(RegIV_Demand)[2,1]
+betaIV_Demand_Var <- (coeftest(RegIV_Demand)[2,2])^2
+
+
+Haus_Supply <- (betaOLS_Supply-betaIV_Supply)^2/(betaIV_Supply_Var - betaOLS_Supply_Var) 
+Haus_Demand <- (betaOLS_Demand-betaIV_Demand)^2/(betaIV_Demand_Var - betaOLS_Demand_Var) 
+
+Haussman_Supply <- as.data.frame(Haus_Supply)
+Haussman_Demand <- as.data.frame(Haus_Demand)
+
+kable(Haussman_Supply)
+kable(Haussman_Demand)
+
+```
+
+#####Number 4: Using Area as the Dependent Variable
+
+The supply elasticity for area is smaller than the supply elasticity for quantity by approximately 0.023.
+
+
+
+```{r echo=FALSE, results='asis'}
+
+
+
+RegIV_Supply_area <- ivreg(ln_area ~ ln_fp + ln_w + trendsp1+ trendsp2 +trendsp3 | ln_w + lag_ln_w + trendsp1 + trendsp2 +trendsp3, data=RSdata)
+
+
+
+IV_AY <- as.data.frame(RegIV_Supply_area$coefficients)
+
+kable(IV_AY)
+```
+
+#####Number 5
+
+We found some slight differences between our coefficient estimates and the ones reported in Roberts and Schlenker (2013) which had seven years less of data.
+
+```{r, echo=FALSE}
+
+```
+
+#####Number 6
+
+In general, the file containing the data is well structured. It contains a "Read me" file that navigates the reader through the steps the authors did. As a minor recommendation, they could have used GitHub. 
+
+```{r, echo=FALSE}
+
+```
+
